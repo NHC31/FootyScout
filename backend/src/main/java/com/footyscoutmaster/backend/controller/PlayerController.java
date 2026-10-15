@@ -1,6 +1,7 @@
 
 package com.footyscoutmaster.backend.controller;
 
+import com.footyscoutmaster.backend.dto.PlayerPageResponse;
 import com.footyscoutmaster.backend.model.Player;
 import com.footyscoutmaster.backend.service.ApiFootballService;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -20,7 +21,7 @@ public class PlayerController {
     }
 
     @GetMapping("/api/players")
-    public List<Player> getPlayers(
+    public PlayerPageResponse getPlayers(
             @RequestParam(defaultValue = "39") int league,
             @RequestParam(defaultValue = "2024") int season,
             @RequestParam(defaultValue = "1") int page,
@@ -34,18 +35,27 @@ public class PlayerController {
                     "Page must be at least 1");
         }
 
-        List<Player> players =
-                apiFootballService.getPlayers(league, season, page);
+        PlayerPageResponse result =
+                apiFootballService.getPlayers(
+                        league, season, page);
 
-        return players.stream()
-                .filter(p -> team == null ||
-                        p.getTeam().equalsIgnoreCase(team))
-                .filter(p -> position == null ||
-                        p.getPosition().equalsIgnoreCase(position))
-                .filter(p -> minAge == null ||
-                        p.getAge() >= minAge)
-                .filter(p -> maxAge == null ||
-                        p.getAge() <= maxAge)
-                .collect(Collectors.toList());
+        List<Player> filteredPlayers =
+                result.getPlayers().stream()
+                        .filter(p -> team == null ||
+                                p.getTeam().equalsIgnoreCase(team))
+                        .filter(p -> position == null ||
+                                p.getPosition().equalsIgnoreCase(position))
+                        .filter(p -> minAge == null ||
+                                p.getAge() >= minAge)
+                        .filter(p -> maxAge == null ||
+                                p.getAge() <= maxAge)
+                        .collect(Collectors.toList());
+
+        return new PlayerPageResponse(
+                filteredPlayers,
+                result.getCurrentPage(),
+                result.getTotalPages(),
+                filteredPlayers.size()
+        );
     }
 }

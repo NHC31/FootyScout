@@ -1,15 +1,16 @@
 
 package com.footyscoutmaster.backend.service;
 
-import java.util.List;
-import java.util.ArrayList;
-
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.footyscoutmaster.backend.dto.PlayerPageResponse;
 import com.footyscoutmaster.backend.model.Player;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 public class ApiFootballService {
@@ -29,17 +30,18 @@ public class ApiFootballService {
         this.objectMapper = objectMapper;
     }
 
-    public List<Player> getPlayers(int league, int season, int page) {
+    public PlayerPageResponse getPlayers(
+            int league, int season, int page) {
 
         String response = restClient.get()
-            .uri(uriBuilder -> uriBuilder
-                    .path("/players")
-                    .queryParam("league", league)
-                    .queryParam("season", season)
-                    .queryParam("page", page)
-                    .build())
-            .retrieve()
-            .body(String.class);
+                .uri(uriBuilder -> uriBuilder
+                        .path("/players")
+                        .queryParam("league", league)
+                        .queryParam("season", season)
+                        .queryParam("page", page)
+                        .build())
+                .retrieve()
+                .body(String.class);
 
         List<Player> players = new ArrayList<>();
 
@@ -48,7 +50,8 @@ public class ApiFootballService {
 
             for (JsonNode record : root.path("response")) {
                 JsonNode player = record.path("player");
-                JsonNode statistics = record.path("statistics").path(0);
+                JsonNode statistics =
+                        record.path("statistics").path(0);
                 JsonNode games = statistics.path("games");
                 JsonNode goals = statistics.path("goals");
                 JsonNode team = statistics.path("team");
@@ -67,11 +70,27 @@ public class ApiFootballService {
                 ));
             }
 
+            JsonNode paging = root.path("paging");
+
+            int currentPage =
+                    paging.path("current").asInt(page);
+
+            int totalPages =
+                    paging.path("total").asInt(1);
+
+            int totalResults =
+                    root.path("results").asInt(players.size());
+
+            return new PlayerPageResponse(
+                    players,
+                    currentPage,
+                    totalPages,
+                    totalResults
+            );
+
         } catch (Exception e) {
             throw new RuntimeException(
                     "Failed to process player data", e);
         }
-
-        return players;
     }
 }
