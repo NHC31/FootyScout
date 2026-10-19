@@ -39,7 +39,19 @@ function App() {
       setError("");
 
       try {
-        const response = await fetch(`/api/players?page=${currentPage}`);
+        const params = new URLSearchParams();
+
+        params.set("page", String(currentPage));
+
+        if (minAge !== "") {
+          params.set("minAge", minAge);
+        }
+
+        if (maxAge !== "") {
+          params.set("maxAge", maxAge);
+        }
+
+        const response = await fetch(`/api/players?${params.toString()}`);
 
         if (!response.ok) {
           throw new Error(`Server returned ${response.status}`);
@@ -60,7 +72,7 @@ function App() {
     }
 
     loadPlayers();
-  }, [currentPage]);
+  }, [currentPage, minAge, maxAge]);
 
   const filteredPlayers = players.filter((player) => {
     const matchesSearch =
