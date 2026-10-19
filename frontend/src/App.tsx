@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import "./App.css";
 
+
 type Player = {
   id: number;
   name: string;
@@ -30,7 +31,8 @@ function App() {
   const [position, setPosition] = useState("All Positions");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-
+  const [minAge, setMinAge] = useState("");
+  const [maxAge, setMaxAge] = useState("");
   useEffect(() => {
     async function loadPlayers() {
       setLoading(true);
